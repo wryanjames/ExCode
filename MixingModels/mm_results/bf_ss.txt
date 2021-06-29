@@ -1,0 +1,137 @@
+
+#################################################################
+# Summary Statistics
+#################################################################
+
+DIC = 86.807
+
+                                      Mean    SD  2.5%    5%   25%   50%   75%
+Epsilon.1                            5.625 5.109 0.048 0.113 1.321 4.167 8.647
+Epsilon.2                            0.162 0.200 0.004 0.008 0.043 0.095 0.194
+Epsilon.3                            4.986 4.543 0.108 0.273 1.631 3.367 7.081
+ID.SD                                0.276 0.221 0.023 0.028 0.099 0.223 0.376
+p.Airport flat.Algae                 0.031 0.023 0.005 0.007 0.013 0.025 0.043
+p.Crab Key.Algae                     0.017 0.022 0.001 0.001 0.004 0.009 0.021
+p.Key Biscayne.Algae                 0.028 0.036 0.001 0.001 0.006 0.015 0.038
+p.Nine mile bank.Algae               0.032 0.042 0.002 0.002 0.007 0.019 0.040
+p.Rattlesnake Creek.Algae            0.040 0.042 0.002 0.004 0.011 0.026 0.055
+p.Shell Key.Algae                    0.020 0.026 0.001 0.001 0.005 0.012 0.025
+p.Totten Key.Algae                   0.040 0.050 0.002 0.003 0.009 0.022 0.051
+p.Airport flat.Epiphytes             0.112 0.095 0.009 0.014 0.045 0.094 0.150
+p.Crab Key.Epiphytes                 0.069 0.095 0.003 0.004 0.015 0.037 0.085
+p.Key Biscayne.Epiphytes             0.074 0.093 0.002 0.004 0.018 0.043 0.093
+p.Nine mile bank.Epiphytes           0.207 0.206 0.004 0.007 0.045 0.134 0.306
+p.Rattlesnake Creek.Epiphytes        0.136 0.141 0.003 0.006 0.032 0.091 0.193
+p.Shell Key.Epiphytes                0.088 0.111 0.002 0.003 0.017 0.046 0.110
+p.Totten Key.Epiphytes               0.207 0.199 0.004 0.006 0.047 0.146 0.307
+p.Airport flat.Mangrove              0.231 0.078 0.078 0.096 0.187 0.236 0.279
+p.Crab Key.Mangrove                  0.137 0.087 0.017 0.022 0.074 0.121 0.186
+p.Key Biscayne.Mangrove              0.259 0.152 0.018 0.029 0.119 0.267 0.393
+p.Nine mile bank.Mangrove            0.220 0.133 0.025 0.041 0.125 0.194 0.288
+p.Rattlesnake Creek.Mangrove         0.285 0.125 0.036 0.067 0.195 0.298 0.372
+p.Shell Key.Mangrove                 0.187 0.126 0.022 0.033 0.096 0.156 0.245
+p.Totten Key.Mangrove                0.211 0.122 0.023 0.036 0.125 0.191 0.280
+p.Airport flat.Seagrass              0.626 0.114 0.358 0.416 0.563 0.640 0.703
+p.Crab Key.Seagrass                  0.777 0.122 0.509 0.563 0.710 0.791 0.865
+p.Key Biscayne.Seagrass              0.638 0.188 0.248 0.341 0.506 0.632 0.794
+p.Nine mile bank.Seagrass            0.541 0.217 0.086 0.146 0.385 0.558 0.714
+p.Rattlesnake Creek.Seagrass         0.539 0.176 0.199 0.250 0.424 0.530 0.657
+p.Shell Key.Seagrass                 0.705 0.152 0.375 0.431 0.613 0.725 0.818
+p.Totten Key.Seagrass                0.542 0.207 0.129 0.183 0.383 0.552 0.704
+p.Airport flat.F-1RTm.Algae          0.032 0.026 0.005 0.006 0.012 0.024 0.044
+p.Airport flat.F-1RTm.Epiphytes      0.112 0.097 0.009 0.013 0.041 0.088 0.154
+p.Airport flat.F-1RTm.Mangrove       0.226 0.074 0.077 0.094 0.184 0.227 0.269
+p.Airport flat.F-1RTm.Seagrass       0.630 0.118 0.339 0.433 0.562 0.643 0.707
+p.Crab Key.F-13RTm.Algae             0.016 0.022 0.001 0.001 0.004 0.009 0.020
+p.Crab Key.F-13RTm.Epiphytes         0.069 0.098 0.002 0.004 0.014 0.035 0.084
+p.Crab Key.F-13RTm.Mangrove          0.134 0.085 0.011 0.020 0.071 0.120 0.180
+p.Crab Key.F-13RTm.Seagrass          0.781 0.120 0.523 0.585 0.715 0.797 0.862
+p.Crab Key.F-16RTm.Algae             0.016 0.022 0.001 0.001 0.004 0.009 0.020
+p.Crab Key.F-16RTm.Epiphytes         0.071 0.101 0.003 0.004 0.014 0.034 0.087
+p.Crab Key.F-16RTm.Mangrove          0.141 0.091 0.012 0.022 0.074 0.122 0.188
+p.Crab Key.F-16RTm.Seagrass          0.772 0.126 0.493 0.550 0.708 0.788 0.861
+p.Key Biscayne.R-2KBRTm.Algae        0.028 0.033 0.001 0.001 0.006 0.015 0.038
+p.Key Biscayne.R-2KBRTm.Epiphytes    0.071 0.087 0.002 0.004 0.017 0.042 0.088
+p.Key Biscayne.R-2KBRTm.Mangrove     0.260 0.151 0.015 0.025 0.119 0.275 0.396
+p.Key Biscayne.R-2KBRTm.Seagrass     0.641 0.189 0.266 0.346 0.509 0.624 0.800
+p.Nine mile bank.R-1 9MRTm.Algae     0.033 0.043 0.001 0.002 0.007 0.020 0.040
+p.Nine mile bank.R-1 9MRTm.Epiphytes 0.216 0.214 0.004 0.007 0.045 0.144 0.319
+p.Nine mile bank.R-1 9MRTm.Mangrove  0.224 0.133 0.022 0.037 0.132 0.200 0.302
+p.Nine mile bank.R-1 9MRTm.Seagrass  0.527 0.218 0.076 0.134 0.370 0.541 0.699
+p.Rattlesnake Creek.F-2RTm.Algae     0.041 0.042 0.002 0.003 0.011 0.027 0.059
+p.Rattlesnake Creek.F-2RTm.Epiphytes 0.133 0.132 0.003 0.006 0.033 0.092 0.194
+p.Rattlesnake Creek.F-2RTm.Mangrove  0.297 0.120 0.031 0.063 0.217 0.319 0.379
+p.Rattlesnake Creek.F-2RTm.Seagrass  0.529 0.167 0.199 0.263 0.422 0.520 0.635
+p.Shell Key.F-8RTm.Algae             0.020 0.027 0.001 0.001 0.005 0.011 0.025
+p.Shell Key.F-8RTm.Epiphytes         0.081 0.100 0.002 0.003 0.015 0.043 0.109
+p.Shell Key.F-8RTm.Mangrove          0.183 0.119 0.015 0.024 0.096 0.155 0.247
+p.Shell Key.F-8RTm.Seagrass          0.716 0.135 0.443 0.496 0.625 0.725 0.813
+p.Totten Key.BB1RTm.Algae            0.039 0.048 0.002 0.003 0.009 0.022 0.053
+p.Totten Key.BB1RTm.Epiphytes        0.219 0.205 0.004 0.006 0.048 0.162 0.324
+p.Totten Key.BB1RTm.Mangrove         0.206 0.114 0.022 0.034 0.129 0.191 0.270
+p.Totten Key.BB1RTm.Seagrass         0.537 0.208 0.111 0.171 0.382 0.547 0.696
+                                        95%  97.5%
+Epsilon.1                            16.347 17.620
+Epsilon.2                             0.557  0.750
+Epsilon.3                            15.018 17.031
+ID.SD                                 0.761  0.823
+p.Airport flat.Algae                  0.084  0.090
+p.Crab Key.Algae                      0.056  0.072
+p.Key Biscayne.Algae                  0.098  0.127
+p.Nine mile bank.Algae                0.105  0.145
+p.Rattlesnake Creek.Algae             0.121  0.149
+p.Shell Key.Algae                     0.068  0.092
+p.Totten Key.Algae                    0.134  0.181
+p.Airport flat.Epiphytes              0.257  0.374
+p.Crab Key.Epiphytes                  0.235  0.335
+p.Key Biscayne.Epiphytes              0.251  0.360
+p.Nine mile bank.Epiphytes            0.655  0.753
+p.Rattlesnake Creek.Epiphytes         0.422  0.518
+p.Shell Key.Epiphytes                 0.322  0.400
+p.Totten Key.Epiphytes                0.615  0.711
+p.Airport flat.Mangrove               0.349  0.385
+p.Crab Key.Mangrove                   0.305  0.347
+p.Key Biscayne.Mangrove               0.483  0.510
+p.Nine mile bank.Mangrove             0.491  0.543
+p.Rattlesnake Creek.Mangrove          0.485  0.516
+p.Shell Key.Mangrove                  0.449  0.514
+p.Totten Key.Mangrove                 0.458  0.501
+p.Airport flat.Seagrass               0.793  0.814
+p.Crab Key.Seagrass                   0.940  0.956
+p.Key Biscayne.Seagrass               0.934  0.956
+p.Nine mile bank.Seagrass             0.856  0.897
+p.Rattlesnake Creek.Seagrass          0.836  0.883
+p.Shell Key.Seagrass                  0.918  0.946
+p.Totten Key.Seagrass                 0.865  0.899
+p.Airport flat.F-1RTm.Algae           0.084  0.095
+p.Airport flat.F-1RTm.Epiphytes       0.281  0.358
+p.Airport flat.F-1RTm.Mangrove        0.350  0.379
+p.Airport flat.F-1RTm.Seagrass        0.801  0.835
+p.Crab Key.F-13RTm.Algae              0.053  0.072
+p.Crab Key.F-13RTm.Epiphytes          0.237  0.328
+p.Crab Key.F-13RTm.Mangrove           0.294  0.338
+p.Crab Key.F-13RTm.Seagrass           0.946  0.961
+p.Crab Key.F-16RTm.Algae              0.054  0.068
+p.Crab Key.F-16RTm.Epiphytes          0.258  0.342
+p.Crab Key.F-16RTm.Mangrove           0.318  0.366
+p.Crab Key.F-16RTm.Seagrass           0.943  0.961
+p.Key Biscayne.R-2KBRTm.Algae         0.092  0.121
+p.Key Biscayne.R-2KBRTm.Epiphytes     0.243  0.335
+p.Key Biscayne.R-2KBRTm.Mangrove      0.468  0.493
+p.Key Biscayne.R-2KBRTm.Seagrass      0.942  0.959
+p.Nine mile bank.R-1 9MRTm.Algae      0.110  0.144
+p.Nine mile bank.R-1 9MRTm.Epiphytes  0.699  0.773
+p.Nine mile bank.R-1 9MRTm.Mangrove   0.491  0.524
+p.Nine mile bank.R-1 9MRTm.Seagrass   0.856  0.897
+p.Rattlesnake Creek.F-2RTm.Algae      0.125  0.147
+p.Rattlesnake Creek.F-2RTm.Epiphytes  0.376  0.484
+p.Rattlesnake Creek.F-2RTm.Mangrove   0.463  0.502
+p.Rattlesnake Creek.F-2RTm.Seagrass   0.824  0.887
+p.Shell Key.F-8RTm.Algae              0.070  0.094
+p.Shell Key.F-8RTm.Epiphytes          0.287  0.339
+p.Shell Key.F-8RTm.Mangrove           0.419  0.462
+p.Shell Key.F-8RTm.Seagrass           0.926  0.949
+p.Totten Key.BB1RTm.Algae             0.133  0.168
+p.Totten Key.BB1RTm.Epiphytes         0.635  0.737
+p.Totten Key.BB1RTm.Mangrove          0.419  0.472
+p.Totten Key.BB1RTm.Seagrass          0.868  0.901

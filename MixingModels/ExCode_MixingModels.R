@@ -3,7 +3,7 @@
 #'     @author: Ryan James
 #'     date: 6/16/21"""
 
-# *** show rainbow parantheses, ctrl + shift + c, and soft wrap 
+# *** show rainbow parentheses, ctrl + shift + c, and soft wrap 
 
 # set working directory
 
