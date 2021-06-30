@@ -71,10 +71,10 @@ mixTable = function(file,site,ind = F,nest = F){
       #df = data.frame(x$name, x$site, x$code, x$source, x$Mean)
       #colnames(df) = c('name', 'site', 'code', 'source', 'mean')
       df = df %>% select(name, site, code, source, mean)
-      df = spread(df, 'source', 'mean')
+      df = pivot_wider(df, names_from = 'source', values_from = 'mean')
     }else{
       df = df %>% select(name, site, source, mean)
-      df = spread(df, 'source', 'mean')
+      df = pivot_wider(df, names_from = 'source', values_from = 'mean')
     }
   }
   
@@ -89,72 +89,30 @@ df = bind_rows(ac, mc)%>%
   mutate(ind = parse_number(code)) %>% 
   select(Species = name, System = site, ind, FB, MBD, MBZ, MP)
 
-# dN15 values for each individual
-acs = read_csv('data/AC_SnookTarponIso.csv')
-mcs = read_csv('data/MC_SnookTarponIso.csv')
-
-sp = bind_rows(acs, mcs) %>% 
-  select(Species, System, ind, d15N)
-
-# join all the together
-df = left_join(df, sp, by = c('Species', 'System', 'ind'))
-write_csv(df, 'data/SnookTarpon_mix.csv')
-
-# calculate the trophic position above prey
-mix = read_csv('data/SnookTarpon_mix.csv')
-sAC = read_csv('data/sCELA_AC4prey.csv')
-sMC = read_csv('data/sCELA_MC4prey.csv')
-
-# d15N value for each source for each system
-acFB = sAC$Meand15N[1]
-acMBD = sAC$Meand15N[2] 
-acMBZ = sAC$Meand15N[3]
-acMP = sAC$Meand15N[4]
-
-mcFB = sMC$Meand15N[1]
-mcMBD = sMC$Meand15N[2] 
-mcMBZ = sMC$Meand15N[3]
-mcMP = sMC$Meand15N[4]
-
-# trophic fractionation factor of N 
-dN = 2.9
-
-# calculate trophic level
-mix = mix %>% 
-  mutate(TP = case_when(
-    System == 'ACS' ~ 
-      ((d15N - (FB*acFB + MBD*acMBD + MBZ*acMBZ + MP*acMP))/dN) + 1,
-    System == 'MCS' ~ 
-      ((d15N - (FB*mcFB + MBD*mcMBD + MBZ*mcMBZ + MP*mcMP))/dN) + 1
-  ))
-
-write_csv(mix, 'data/SnookTarpon_full.csv')
 
 # generate z scores
-zMix = mix %>% 
-  select(Species, System, FB, MBD, MBZ, MP, TP) %>% 
+df = df %>%  
   mutate_if(is.numeric, scale) 
 
-write_csv(zMix, 'data/SnookTarpon_zHV.csv')
 
 # hypervolumes ----
 
 # function to bootstrap hypervolumes to generate confidence intervals
 # data = dataframe or tibble of z-scored values to make hvs
-# num = number of bootstrapped hvs to make
+# n = number of bootstrapped hvs to make
 # frac = fraction of data points to use to make bootstrapped hvs
 #    ** can also be input as a whole number for how many  
 #       data points to use in resampling of bootstraps
 # Returns vector of bootstrapped hvs
-HVboot = function(data, num, frac, vol = NULL){
+HVboot = function(data, n, frac, vol = NULL){
   require(tidyverse)
   df = tibble(Volume = rep(NA, len = num))
-  n = ceiling(frac*nrow(data))
+  num = ceiling(frac*nrow(data))
   if(frac>1){
-    n = frac
+    num = frac
   }
-  for (i in 1:num){
-    rand = sample_n(data, n, replace = TRUE)
+  for (i in 1:n){
+    rand = sample_n(data, num, replace = TRUE)
     require(hypervolume)
     randh = hypervolume_gaussian(rand,
                                  samples.per.point = 5000,
@@ -187,7 +145,6 @@ HVboot = function(data, num, frac, vol = NULL){
 
 
 # generate hvs ----
-df = read_csv('data/SnookTarpon_zHV.csv') 
 
 # Snook in ACS
 acSN = df %>% filter(Species == 'Snook', System == 'ACS') %>% 
@@ -291,14 +248,14 @@ write_csv(hvCI, 'data/hv_CI.csv')
 # overlap 
 # data1 = z scored data for hv 1
 # data2 = z scored data for hv 2
-# num = number of iterations to run for bootstrapping
+# n = number of iterations to run for bootstrapping
 # frac = fraction of data points to use to make bootstrapped hvs
 #    ** can also be input as a whole number for how many  
 #       data points to use in resampling of bootstraps
 # returns df with overlap and amount unique of each hv
-bootOverlap = function(data1,data2,num,frac){
+bootOverlap = function(data1,data2,n,frac){
   require(tidyverse)
-  df = tibble(sorenson = rep(NA, num), unique1 = NA, unique2 = NA)
+  df = tibble(sorenson = rep(NA, n), unique1 = NA, unique2 = NA)
   n1 = ceiling(frac*nrow(data1))
   if(frac>1){
     n1 = frac
@@ -348,25 +305,6 @@ bootOverlap = function(data1,data2,num,frac){
   return(df)
 }
 
-# system comparisons
-# snook
-hvSN= hypervolume_join(acSNhv, mcSNhv)
-SN = hypervolume_set(acSNhv, mcSNhv,  check.memory = F)
-hypervolume_overlap_statistics(SN)
-
-ov1 = bootOverlap(acSN, mcSN, 100, 0.75)
-ov1$comp = 'System'
-ov1$type = 'Snook'
-
-# Tarpon
-hvTR= hypervolume_join(acTRhv, mcTRhv)
-TR = hypervolume_set(acTRhv, mcTRhv, check.memory = F)
-
-hypervolume_overlap_statistics(TR)
-
-ov2 = bootOverlap(acTR, mcTR, 100, 0.75)
-ov2$comp = 'System'
-ov2$type = 'Tarpon'
 
 # species comparisons
 # Alligator
@@ -374,9 +312,9 @@ hvAC= hypervolume_join(acSNhv, acTRhv)
 AC = hypervolume_set(acSNhv, acTRhv,  check.memory = F)
 hypervolume_overlap_statistics(AC)
 
-ov3 = bootOverlap(acSN, acTR, 100, 0.75)
-ov3$comp = 'Species'
-ov3$type = 'ACS'
+ovAC = bootOverlap(acSN, acTR, 100, 0.75)
+ovAC$comp = 'Species'
+ovAC$type = 'ACS'
 
 # McCormick
 hvMC= hypervolume_join(mcSNhv, mcTRhv)
@@ -384,12 +322,12 @@ MC = hypervolume_set(mcSNhv, mcTRhv, check.memory = F, verbose = F)
 
 hypervolume_overlap_statistics(MC)
 
-ov4 = bootOverlap(mcSN, mcTR, 100, 0.75)
-ov4$comp = 'Species'
-ov4$type = 'MCS'
+ovMC = bootOverlap(mcSN, mcTR, 100, 0.75)
+ovMC$comp = 'Species'
+ovMC$type = 'MCS'
 
 # bind data together
-OV = bind_rows(ov1, ov2, ov3, ov4)
+OV = bind_rows(ovAC, ovMC)
 write_csv(OV, 'data/Ov_CI.csv')
 
 
@@ -527,45 +465,3 @@ plot(hvMC, pairplot = T, colors=c('goldenrod','gainsboro'),
 )
 dev.off()
 
-# test of 10 ----
-# Snook in ACS
-acSN = df %>% filter(Species == 'Snook', System == 'ACS') %>% 
-  select(FB, MBD, MBZ, MP)
-      
-acSNhvCI = HVboot(acSN, 100, 10)
-acSNhvCI$Species = 'Snook'
-acSNhvCI$System = 'ACS'
-
-
-# Snook in MCS
-mcSN = df %>% filter(Species == 'Snook', System == 'MCS') %>% 
-  select(FB, MBD, MBZ, MP)
-       
-mcSNhvCI = HVboot(mcSN, 100, 10)
-mcSNhvCI$Species = 'Snook'
-mcSNhvCI$System = 'MCS'
-
-# Tarpon in ACS
-acTR = df %>% filter(Species == 'Tarpon', System == 'ACS') %>% 
-  select(FB, MBD, MBZ, MP)
-
-acTRhvCI = HVboot(acTR, 100, 10)
-acTRhvCI$Species = 'Tarpon'
-acTRhvCI$System = 'ACS'
-
-# Tarpon in MCS
-mcTR = df %>% filter(Species == 'Tarpon', System == 'MCS') %>% 
-  select(FB, MBD, MBZ, MP)
-
-mcTRhvCI = HVboot(mcTR, 100, 10)
-mcTRhvCI$Species = 'Tarpon'
-mcTRhvCI$System = 'MCS'
-
-# bind all data together for plotting 
-hvCI = bind_rows(acSNhvCI, mcSNhvCI, acTRhvCI, mcTRhvCI)
-write_csv(hvCI, 'data/hv_CIsmall.csv')
-
-hvCI %>% group_by(Species, System) %>% 
-  summarize(mean(Volume),
-            quantile(Volume, 0.025),
-            quantile(Volume, 0.975))
