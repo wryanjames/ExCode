@@ -9,20 +9,14 @@ Here is an example for how to use mixing model output data to generate the troph
 This script gives examples of how to:
 
 1.  Load `MixSIAR` output into R with a custom function
-
 2.  Z-score axes used to generate hypervolumes
-
 3.  Generate trophic niche hypervolumes using raw mixing model estimates
+4.  Generate plots of hypervolumes
+5.  Calculate niche size (volume)
+  + calculate bootstrapped niche size with custom function to estimate confidence intervals of niche size
+6.  Calculate overlap between two hypervolumes
+  + calculate bootstrapped overlap metrics to estimate confidence intervals of overlap
 
-4.  Calculate niche size (volume)
-
--   calculate bootstrapped niche size with custom function to estimate confidence intervals of niche size
-
-5.  Calculate overlap between two hypervolumes
-
--   calculate bootstrapped overlap metrics to estimate confidence intervals of overlap
-
-6.  Generate plots of hypervolumes
 
 ### Load requried packages
 
@@ -221,6 +215,101 @@ mcTRhv = hypervolume_gaussian(mcTR, name = 'Tarpon MCS',
                               chunk.size = 1000, 
                               verbose = F)
 ```
+
+### Generate hypervolume plots
+Before plotting hypervolumes need to be joined with `hypervolume::hypervolume_join()`. This can be used to combine more than two hypervolumes in order to plot. The plot function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with `pairplot = F`
+
+```{r plot all hvs, out.width="50%", cache=T}
+# Alligator
+hvAC= hypervolume_join(acSNhv, acTRhv)
+
+plot(hvAC, pairplot = T, colors=c('goldenrod','gainsboro'),
+     names= c("Freshwater\n Benthic",
+              "Marine\n Benthic\n Detritivore",
+              "Marine\n Benthic\n Zoobenthivore",
+              "Marine\n Pelagic",
+              "Trophic\n Position"),
+     show.3d=FALSE,plot.3d.axes.id=NULL,
+     show.axes=TRUE, show.frame=TRUE,
+     show.random=T, show.density=TRUE,show.data=F,
+     show.legend=T, limits=c(-6,6), 
+     show.contour=F, contour.lwd= 2, 
+     contour.type='alphahull', 
+     contour.alphahull.alpha=0.25,
+     contour.ball.radius.factor=1, 
+     contour.kde.level=0.01,
+     contour.raster.resolution=100,
+     show.centroid=TRUE, cex.centroid=2,
+     point.alpha.min=0.2, point.dark.factor=0.5,
+     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
+     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
+     plot.function.additional=NULL,
+     verbose=FALSE
+)
+
+# McCormick
+hvMC= hypervolume_join(mcSNhv, mcTRhv)
+
+plot(hvMC, pairplot = T, colors=c('goldenrod','gainsboro'),
+     names= c("Freshwater\n Benthic",
+              "Marine\n Benthic\n Detritivore",
+              "Marine\n Benthic\n Zoobenthivore",
+              "Marine\n Pelagic",
+              "Trophic\n Position"),
+     show.3d=FALSE,plot.3d.axes.id=NULL,
+     show.axes=TRUE, show.frame=TRUE,
+     show.random=T, show.density=TRUE,show.data=F,
+     show.legend=T, limits=c(-6,6), 
+     show.contour=F, contour.lwd= 2, 
+     contour.type='alphahull', 
+     contour.alphahull.alpha=0.25,
+     contour.ball.radius.factor=1, 
+     contour.kde.level=0.01,
+     contour.raster.resolution=100,
+     show.centroid=TRUE, cex.centroid=2,
+     point.alpha.min=0.2, point.dark.factor=0.5,
+     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
+     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
+     plot.function.additional=NULL,
+     verbose=FALSE
+)
+```
+
+Plots can be saved by adding image function (e.g. ,`tiff()`,`png()`, `jpeg()`) followed by the `plot()` and then finally  `dev.off()` 
+
+```{r plot save show, eval=F}
+tiff("figs/MCSHV_sp.tiff", width = 9, height = 9, units = 'in', 
+     res = 600, compression = 'lzw')
+
+plot(hvMC, pairplot = T, colors=c('goldenrod','gainsboro'),
+     names= c("Freshwater\n Benthic",
+              "Marine\n Benthic\n Detritivore",
+              "Marine\n Benthic\n Zoobenthivore",
+              "Marine\n Pelagic",
+              "Trophic\n Position"),
+     show.3d=FALSE,plot.3d.axes.id=NULL,
+     show.axes=TRUE, show.frame=TRUE,
+     show.random=T, show.density=TRUE,show.data=F,
+     show.legend=T, limits=c(-6,6), 
+     show.contour=F, contour.lwd= 2, 
+     contour.type='alphahull', 
+     contour.alphahull.alpha=0.25,
+     contour.ball.radius.factor=1, 
+     contour.kde.level=0.01,
+     contour.raster.resolution=100,
+     show.centroid=TRUE, cex.centroid=2,
+     point.alpha.min=0.2, point.dark.factor=0.5,
+     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
+     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
+     plot.function.additional=NULL,
+     verbose=FALSE
+)
+dev.off()
+
+
+```
+
+
 
 ### Calulating niche size 
 The function `hypervolume::get_volume()` can be used to calculate the niche size (volume) 
@@ -553,98 +642,5 @@ ggplot(sp, aes(type, unique, fill = hv))+
         legend.title = element_blank(),
         strip.text.x = element_text(size = 18),
         legend.text = element_text(size = 16))
-```
-
-### Generate hypervolume plots
-Before plotting hypervolumes need to be joined with `hypervolume::hypervolume_join()`. This can be used to combine more than two hypervolumes in order to plot. The plot function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with `pairplot = F`
-
-```{r plot all hvs, out.width="50%"}
-# Alligator
-hvAC= hypervolume_join(acSNhv, acTRhv)
-
-plot(hvAC, pairplot = T, colors=c('goldenrod','gainsboro'),
-     names= c("Freshwater\n Benthic",
-              "Marine\n Benthic\n Detritivore",
-              "Marine\n Benthic\n Zoobenthivore",
-              "Marine\n Pelagic",
-              "Trophic\n Position"),
-     show.3d=FALSE,plot.3d.axes.id=NULL,
-     show.axes=TRUE, show.frame=TRUE,
-     show.random=T, show.density=TRUE,show.data=F,
-     show.legend=T, limits=c(-6,6), 
-     show.contour=F, contour.lwd= 2, 
-     contour.type='alphahull', 
-     contour.alphahull.alpha=0.25,
-     contour.ball.radius.factor=1, 
-     contour.kde.level=0.01,
-     contour.raster.resolution=100,
-     show.centroid=TRUE, cex.centroid=2,
-     point.alpha.min=0.2, point.dark.factor=0.5,
-     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
-     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
-     plot.function.additional=NULL,
-     verbose=FALSE
-)
-
-# McCormick
-hvMC= hypervolume_join(mcSNhv, mcTRhv)
-
-plot(hvMC, pairplot = T, colors=c('goldenrod','gainsboro'),
-     names= c("Freshwater\n Benthic",
-              "Marine\n Benthic\n Detritivore",
-              "Marine\n Benthic\n Zoobenthivore",
-              "Marine\n Pelagic",
-              "Trophic\n Position"),
-     show.3d=FALSE,plot.3d.axes.id=NULL,
-     show.axes=TRUE, show.frame=TRUE,
-     show.random=T, show.density=TRUE,show.data=F,
-     show.legend=T, limits=c(-6,6), 
-     show.contour=F, contour.lwd= 2, 
-     contour.type='alphahull', 
-     contour.alphahull.alpha=0.25,
-     contour.ball.radius.factor=1, 
-     contour.kde.level=0.01,
-     contour.raster.resolution=100,
-     show.centroid=TRUE, cex.centroid=2,
-     point.alpha.min=0.2, point.dark.factor=0.5,
-     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
-     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
-     plot.function.additional=NULL,
-     verbose=FALSE
-)
-```
-
-Plots can be saved by adding image function (e.g. ,`tiff()`,`png()`, `jpeg()`) followed by the `plot()` and then finally  `dev.off()` 
-
-```{r plot save show, eval=F}
-tiff("figs/MCSHV_sp.tiff", width = 9, height = 9, units = 'in', 
-     res = 600, compression = 'lzw')
-
-plot(hvMC, pairplot = T, colors=c('goldenrod','gainsboro'),
-     names= c("Freshwater\n Benthic",
-              "Marine\n Benthic\n Detritivore",
-              "Marine\n Benthic\n Zoobenthivore",
-              "Marine\n Pelagic",
-              "Trophic\n Position"),
-     show.3d=FALSE,plot.3d.axes.id=NULL,
-     show.axes=TRUE, show.frame=TRUE,
-     show.random=T, show.density=TRUE,show.data=F,
-     show.legend=T, limits=c(-6,6), 
-     show.contour=F, contour.lwd= 2, 
-     contour.type='alphahull', 
-     contour.alphahull.alpha=0.25,
-     contour.ball.radius.factor=1, 
-     contour.kde.level=0.01,
-     contour.raster.resolution=100,
-     show.centroid=TRUE, cex.centroid=2,
-     point.alpha.min=0.2, point.dark.factor=0.5,
-     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
-     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
-     plot.function.additional=NULL,
-     verbose=FALSE
-)
-dev.off()
-
-
 ```
 

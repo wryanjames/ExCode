@@ -1,6 +1,6 @@
-#'""" Hypervolumes for CELA trophic niche
+#'""" Example code to make hv with raw/individual mm data
 #'    @author: Ryan James
-#'    Date: 1/19/21"""
+#'    Date: 6/30/21"""
 
 library(tidyverse)
 library(hypervolume)

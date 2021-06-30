@@ -1,0 +1,575 @@
+---
+title: "Example Code making Hypervolumes with means and sd from mixing model results"
+author: "W. Ryan James"
+output: html_document
+---
+
+Here is an example for how to use mixing model output data to generate the food web hypervolumes of a restored and a reference oyster bed with 6 species using the means and sd of resource use calculated susing `MixSIAR`. Data comes from Rezek et al. [2017](https://doi.org/10.1007/s00227-017-3084-2). A similar method is described in James et al. [2019](https://doi.org/10.1016/j.scitotenv.2019.134801).
+
+This script gives examples of how to:
+
+1.  Load `MixSIAR` output into R with a custom function
+2.  Generate points with custom function `HVvalues()` that are z-scored
+3.  Generate food web hypervolumes using mean and sd mixing model estimates
+4.  Plot food web hypervolumes
+5.  Calculate trophic breadth (volume)
+6.  Calculate food web overlap between two hypervolumes
+7.  Calculate percent recovery of food web
+8.  Repeat process to generate confidence intervals
+
+### Load requried packages
+
+```{r, message=F, warning=F}
+library(tidyverse)
+library(hypervolume)
+```
+
+### Load mixing model data
+
+This is a custom function that was written to import the output of the mixing models
+
+**note** for this to work, all columns must be on the same row like this:
+
+```{r outgood, echo=FALSE, out.width="50%"}
+knitr::include_graphics("C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/figs/mmOutputEx.PNG")   
+```
+
+and not wrapped like this:
+
+```{r outbad, echo=FALSE, out.width="50%"}
+knitr::include_graphics("C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/figs/mmOutputBad.PNG")   
+```
+
+Use the `mixTable` function to load data
+
+`file =` name of name of .txt of summary stats from `MixSIAR`
+
+`site =` 'site' or 'location' of the data set
+
+`ind = F` if `TRUE` will output with columns as source values, default is `FALSE` and will output data with columns as mean, sd, and posterior distribution intervals: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% + 1.5 \* IQR, ymin = 25% - 1.5 \* IQR
+
+`nest = F` if nested mixing model, `TRUE` will return the sources of nested
+
+```{r mixtable, echo = T}
+mixTable = function(file,site,ind = F,nest = F){
+  require(tidyverse)
+  cn = c('ID', 'Mean', 'SD', '2.5%', '5%', '25%', '50%', '75%', '95%', '97.5%')
+  x = read_table(file, skip = 7,  col_names = T)
+  names(x) = cn
+  x$source = NA
+  x$name = NA
+  x$code = NA
+  
+  if (nest == F){
+    for (i in 1:nrow(x)){
+      temp = strsplit(x$ID, split = '.', fixed = T)
+      x$source[i] = temp[[i]][3]
+      x$name[i] = temp[[i]][2]
+      
+      x$site = site
+      x$ymax = x$`75%` + 1.5*(x$`75%` - x$`25%`)
+      x$ymin = x$`25%` - 1.5*(x$`75%` - x$`25%`)
+      
+      df = data.frame(x$name, x$site, x$source, x$Mean, x$SD, x$`2.5%`, x$`97.5%`,
+                      x$`50%`, x$`25%`, x$`75%`, x$ymax, x$ymin)
+      colnames(df) = c('name', 'site', 'source', 'mean', 'sd', 'lowend', 'highend',
+                       'mid', 'low', 'up', 'ymax', 'ymin')
+    }
+  }else{
+    for (i in 1:nrow(x)){
+      temp = strsplit(x$ID, split = '.', fixed = T)
+      x$source[i] = temp[[i]][4]
+      x$code[i] = temp[[i]][3]
+      x$name[i] = temp[[i]][2]
+      
+      x$site = site
+      x$ymax = x$`75%` + 1.5*(x$`75%` - x$`25%`)
+      x$ymin = x$`25%` - 1.5*(x$`75%` - x$`25%`)
+      
+      df = tibble(x$name, x$site, x$source, x$code, x$Mean, x$SD, x$`2.5%`, x$`97.5%`,
+                  x$`50%`, x$`25%`, x$`75%`, x$ymax, x$ymin)
+      colnames(df) = c('name', 'site', 'source', 'code', 'mean', 'sd', 'lowend', 'highend',
+                       'mid', 'low', 'up', 'ymax', 'ymin')
+    }
+  }
+  
+  for (i in 1:nrow(df)){
+    if (df$ymax[i] > df$highend[i]){
+      df$ymax[i] = df$highend[i]
+    }
+    if (df$ymin[i] < df$lowend[i]){
+      df$ymin[i] = df$lowend[i]
+    }
+  }
+  df = na.omit(df)
+  df = subset(df, name != 'global') 
+  
+  if (ind == T){
+    if (nest == T){
+      #df = data.frame(x$name, x$site, x$code, x$source, x$Mean)
+      #colnames(df) = c('name', 'site', 'code', 'source', 'mean')
+      df = df %>% select(name, site, code, source, mean)
+      df = pivot_wider(df, names_from = 'source', values_from = 'mean')
+    }else{
+      df = df %>% select(name, site, source, mean)
+      df = pivot_wider(df, names_from = 'source', values_from = 'mean')
+    }
+  }
+  
+  return(df)
+}
+
+```
+
+Example of output
+
+```{r mixload, message=F, warning=F}
+mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt', 
+              site = 'Reference',ind = F, nest = F)
+
+```
+
+Same data with `ind = T`
+
+```{r, message=F, warning=F}
+mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt', 
+              site = 'Reference',ind = T, nest = F)
+```
+
+Load data from the mixing models and combine together to be used to generate hypervolumes
+
+```{r load show, message=F, warning=F}
+ref = mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt', 
+              site = 'Reference',ind = F, nest = F)
+res = mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRef_ss.txt', 
+               site = 'Restored', ind = F, nest = F)
+
+# bind data together
+df = bind_rows(ref, res) %>% 
+  select(name, site, source, mean, sd, lowend, highend)
+
+df
+```
+
+### Generate random points from mean and sd
+
+When generating hypervolumes it is recommended by Blonder et al. [2014](https://doi-org.ezproxy.fiu.edu/10.1111/geb.12146) & [2018](https://doi-org.ezproxy.fiu.edu/10.1111/2041-210X.12865) that the number of input points (n) is great than 10 times the number of axes (m) $n/m > 10$. Not all situation allow for this recommendation, and the mean and sd of the `MixSIAR` output can be used to generate random points to be used to calculate the hypervolumes. This approach also better incorporates the information from the posterior distribution of the `MixSIAR` estimates.
+
+The `HVvalues()` function generates random points of *n* length data from random sample with mean and sd but can be generated between a high and low value if `end_points = T`
+  + **Note** chose either column names or column numbers for `ID_rows` and `names` either work but must be the same
+  
+  `df =` dataframe or tibble with each row containing unique entry for making random points 
+  
+  `ID_rows =` vector of column names or numbers with id information
+  
+  `names =` column name or number that contains names of axes
+  
+  `mean =` column name or column number of df with mean 
+  
+  `sd =` column name or column number of df with sd 
+  
+  `n =` number of points to randomly generate
+  
+  `z_score = F` `TRUE` or `FALSE`, if `T` z-scores values
+  
+  `end_points = F` `TRUE` or `FALSE` for if random points need to be generated between a high and low end point (e.g. 2.5% and 97.5% interval) `low` and `high` required, if `end_points = T`
+  
+  `low = NULL` if `end_points = T`, column name or column number of df with lower bound to sample in
+  
+  `high = NULL` if `end_points = T`, column name or column number of df with upper bound to sample in
+  
+```{r rand points, echo=T}
+HVvalues = function(df, ID_rows, names, mean, sd, n, z_score = F,
+                    end_points = F, low = NULL, high = NULL){
+  require(tidyverse)
+  require(truncnorm)
+  
+  # check to see if information is needed to restrict where points are
+  if (end_points){
+    if (is_empty(df[,low]) | is_empty(df[,high])){
+      return(cat('Warning: low and/or high columns not specified \n
+                  Specific and run again or end_points = F \n'))
+    }
+  }
+  
+  # check to see if there are more 
+  if(T %in% duplicated(df[,c(ID_rows,names)])){
+    return(cat('Warning: some of the rows contain duplicated information \n
+                make sure data is correct \n'))
+  }
+  
+  # rename variables to make code work
+  if (is.numeric(mean)){
+    names(df)[mean] = 'Mean'
+  }else {
+    df = df %>% rename(Mean = mean)
+  }
+  
+  if (is.numeric(sd)){
+    names(df)[sd] = 'SD'
+  }else {
+    df = df %>% rename(SD = sd)
+  }
+  
+  if (end_points){
+    if (is.numeric(low)){
+      names(df)[low] = 'lower'
+    }else {
+      df = df %>% rename(lower = low)
+    }
+    
+    if (is.numeric(high)){
+      names(df)[high] = 'upper'
+    }else {
+      df = df %>% rename(upper = high)
+    }
+  }
+  
+  # make sure the names is not numeric 
+  if (is.numeric(names)){
+    names = names(df)[names]
+  }
+  
+  # generate random points within bounds
+  if(end_points){
+    
+    df_tot = df %>% slice(rep(1:n(), each=n))%>% 
+      mutate(point = 
+               truncnorm::rtruncnorm(1, a = lower, b = upper,
+                                     mean = Mean, sd = SD),
+             num = rep(1:n, times=nrow(df))) %>%
+      select(-Mean, -SD, -lower, -upper)%>%
+      pivot_wider(names_from = names, values_from = point)%>% 
+      select(-num)
+  }else {
+    # generate random points outside of bounds
+    df_tot = df %>% slice(rep(1:n(), each=n))%>%
+      mutate(point = 
+               truncnorm::rtruncnorm(1, mean = Mean, sd = SD),
+             num = rep(1:n, times=nrow(df))) %>%
+      select(-Mean, -SD)%>%
+      pivot_wider(names_from = names, values_from = point)%>% 
+      select(-num)
+  }
+  if (z_score){
+    df_tot = df_tot %>% 
+      mutate_if(is.numeric, scale)
+  }
+  
+  return(df_tot)
+  
+}
+```
+
+Generate random points from mixing model data
+
+```{r gen points r, message=F, warning=F}
+
+oy = HVvalues(df = df, ID_rows = c('name','site'),names = c('source'), 
+                mean = 'mean', sd = 'sd', n = 20,
+                end_points = T, low = 'lowend', high = 'highend', 
+                z_score = T)
+oy
+
+```
+
+
+### Generate hypervolumes
+
+```{r hv, message=F, warning=F, cache=T}
+# Reference hypervolume
+# subset reference data
+ref_df = oy %>% filter(site == 'Reference')%>%
+    select(-name, -site)
+  
+# generate hypervolume
+ref_hv = hypervolume_gaussian(ref_df, name = 'Reference',
+                                #samples.per.point = ceiling((10^(3 + sqrt(ncol(ref_df))))/nrow(ref_df)),
+                                samples.per.point = 5000,
+                                kde.bandwidth = estimate_bandwidth(ref_df), 
+                                sd.count = 3, 
+                                quantile.requested = 0.95, 
+                                quantile.requested.type = "probability", 
+                                chunk.size = 1000, 
+                                verbose = F)
+  
+# Restored hypervolume
+# subset restoration data
+res_df = oy %>% filter(site == 'Restored') %>% 
+    select(-name, -site)
+  
+#generate restored hypervolume
+res_hv = hypervolume_gaussian(res_df, name = 'Restored',
+                                #samples.per.point = ceiling((10^(3 + sqrt(ncol(res_df))))/nrow(res_df)),
+                                samples.per.point = 5000,
+                                kde.bandwidth = estimate_bandwidth(res_df), 
+                                sd.count = 3, 
+                                quantile.requested = 0.95, 
+                                quantile.requested.type = "probability", 
+                                chunk.size = 1000, 
+                                verbose = F)
+```
+
+### Generate hypervolume plots
+
+Before plotting hypervolumes need to be joined with `hypervolume::hypervolume_join()`. This can be used to combine more than two hypervolumes in order to plot. The plot function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with `pairplot = F`
+
+```{r plot hv, out.width="50%", cache = T}
+# Plot oyster data
+hvOY= hypervolume_join(ref_hv, res_hv)
+
+plot(hvOY, pairplot = T, colors=c("#EBCC2A","#2ca1db"),
+     names= c(expression(italic("Gracilaria"),"SPOM", "SSOM")),
+     show.3d=FALSE,plot.3d.axes.id=NULL,
+     show.axes=TRUE, show.frame=TRUE,
+     show.random=T, show.density=TRUE,show.data=F,
+     show.legend=T, limits=c(-6,6), 
+     show.contour=F, contour.lwd= 2, 
+     contour.type='alphahull', 
+     contour.alphahull.alpha=0.25,
+     contour.ball.radius.factor=1, 
+     contour.kde.level=0.01,
+     contour.raster.resolution=100,
+     show.centroid=TRUE, cex.centroid=2,
+     point.alpha.min=0.2, point.dark.factor=0.5,
+     cex.random=0.5,cex.data=1,cex.axis=1.5,cex.names=2,cex.legend=2,
+     num.points.max.data = 100000, num.points.max.random = 200000, reshuffle=TRUE,
+     plot.function.additional=NULL,
+     verbose=FALSE
+)
+
+```
+
+### Calulating trophic breadth
+
+The function `hypervolume::get_volume()` can be used to calculate the trophic breadth or variation in resource use of the food web
+
+```{r volume}
+# Reference food web
+get_volume(ref_hv)
+
+# Restored food web
+get_volume(res_hv)
+
+```
+
+### Calculate overlap
+
+Overlap is a measure of the similarity between two hypervolumes. It takes into account both the position and the size of the hypervolumes. So to have high overlap, the hypervolumes need to be both similar in size and located in the same *n*-dimensional space.
+
+To calculate overlap, hypevolumes need to be joined with `hypervolume::hypervolume_set()`. To calculate the metrics `hypervolume::hypervolume_overlap_statistics()`. This function calculates 4 metrics that are related to the overlap of the two hypervolumes
+
+*jaccard*: Jaccard similarity (volume of intersection of 1 and 2 divided by volume of union of 1 and 2)
+
+*sorenson*: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)
+
+*fraq_uniq_1*: Unique fraction of hypervolume 1 (volume of unique component of 1 divided by volume of 1))
+
+*fraq_uniq_2*: Unique fraction of hypervolume 2 (volume of unique component of 2 divided by volume of 2))
+
+```{r overlap, message=F, warning=F}
+
+# join hypervolumes
+set = hypervolume_set(ref_hv, res_hv, check.memory = F, verbose = F)
+
+# calculate overlap
+hypervolume_overlap_statistics(set)
+
+```
+
+### Calculate percent recovery of food web
+In restoration, a system is considered recovered as it becomes similar to the reference system or a specific target. This can be easily calculated with hypervolumes by determining the overlap between the reference and restored food web hypervolumes. However, given that there is inherent variability between systems, [James et al. 2019](https://doi.org/10.1016/j.scitotenv.2019.134801) developed a method perecent recovery ($\%_{recovery}$) to compare overlap between two hypervolumes to the overlap of two randomly hypervolumes generated from the same data.$$\%_{recovery} = SO_{hab}/SO_{rand}$$ 
+$SO_{hab}$ = Sorensen overlap of the reference and restored habitats,
+$SO_{rand}$ = Sorensen overlap of the 2 random hypervolumes
+
+
+```{r per recovery, cache=T}
+# create random overlap from data
+# randomly assign data to make hvs
+hvs = bind_rows(ref_df, res_df)
+sub = sample(nrow(hvs),nrow(res_df))
+df1 = hvs[sub,]
+df2 = hvs[-sub,]
+  
+# generate random hv 1 
+hv1 = hypervolume_gaussian(df1, name = 'hv1',
+                             #samples.per.point = ceiling((10^(3 + sqrt(ncol(df1))))/nrow(df1)),
+                             samples.per.point = 5000,
+                             kde.bandwidth = estimate_bandwidth(df1), 
+                             sd.count = 3, 
+                             quantile.requested = 0.95, 
+                             quantile.requested.type = "probability", 
+                             chunk.size = 1000, 
+                             verbose = F)
+  
+hv2 = hypervolume_gaussian(df2, name = 'hv2',
+                             #samples.per.point = ceiling((10^(3 + sqrt(ncol(df2))))/nrow(df2)),
+                             samples.per.point = 5000,
+                             kde.bandwidth = estimate_bandwidth(df2), 
+                             sd.count = 3, 
+                             quantile.requested = 0.95, 
+                             quantile.requested.type = "probability", 
+                             chunk.size = 1000, 
+                             verbose = F)
+  # join hypervolumes
+set_rand = hypervolume_set(hv1, hv2, check.memory = F, verbose = F)
+
+SO_hab = hypervolume_overlap_statistics(set)[2]
+SO_rand = hypervolume_overlap_statistics(set_rand)[2]
+
+# calulate %recovery
+SO_hab/SO_rand * 100
+```
+
+### Repeat process to calculate confidence intervals
+To calculate confidence intervals, the above steps can be repeated *n* times. This can easily be done with a `for` loop. 
+
+```{r for loop, eval=F}
+# number or iterations
+n = 50
+
+
+# create tibble to store data
+df_hvAll = tibble(rep = rep(seq(1,n,1)),
+                  ref_vol = NA, res_vol= NA,
+                  sorenson = NA, randOV = NA)
+
+
+
+for (i in 1:n){
+  # generate random from mean and sd that are z-scored
+  oy = HVvalues(df = df, ID_rows = c('name','site'),names = c('source'), 
+                mean = 'mean', sd = 'sd', n = 20,
+                end_points = T, low = 'lowend', high = 'highend', 
+                z_score = T)
+  
+  # Reference hypervolume
+  # subset reference data
+  ref_df = oy %>% filter(site == 'Reference')%>%
+    select(-name, -site)
+  
+  # generate hypervolume
+  ref_hv = hypervolume_gaussian(ref_df, name = 'Reference',
+                                #samples.per.point = ceiling((10^(3 + sqrt(ncol(ref_df))))/nrow(ref_df)),
+                                samples.per.point = 5000,
+                                kde.bandwidth = estimate_bandwidth(ref_df), 
+                                sd.count = 3, 
+                                quantile.requested = 0.95, 
+                                quantile.requested.type = "probability", 
+                                chunk.size = 1000, 
+                                verbose = F)
+  
+  # get reference volume
+  df_hvAll$ref_vol[i] = get_volume(ref_hv)
+
+  
+  # subset restoration data
+  res_df = oy %>% filter(site == 'Restored') %>% 
+    select(-name, -site)
+  
+  # generate restored hypervolume
+  res_hv = hypervolume_gaussian(res_df, name = 'Restored',
+                                #samples.per.point = ceiling((10^(3 + sqrt(ncol(res_df))))/nrow(res_df)),
+                                samples.per.point = 5000,
+                                kde.bandwidth = estimate_bandwidth(res_df), 
+                                sd.count = 3, 
+                                quantile.requested = 0.95, 
+                                quantile.requested.type = "probability", 
+                                chunk.size = 1000, 
+                                verbose = F)
+  # get restoration volume
+  df_hvAll$res_vol[i] = get_volume(res_hv)
+  
+  # join hypervolumes
+  set = hypervolume_set(ref_hv, res_hv, check.memory = F, verbose = F)
+  
+  # calculate sorenson overlap
+  df_hvAll$sorenson[i] = hypervolume_overlap_statistics(set)[2]
+  
+  # create random overlap from data
+  # randomly assign data to make hvs
+  hvs = bind_rows(ref_df, res_df)
+  sub = sample(nrow(hvs),nrow(res_df))
+  df1 = hvs[sub,]
+  df2 = hvs[-sub,]
+  
+  # generate random hv 1 
+  hv1 = hypervolume_gaussian(df1, name = 'hv1',
+                             #samples.per.point = ceiling((10^(3 + sqrt(ncol(df1))))/nrow(df1)),
+                             samples.per.point = 5000,
+                             kde.bandwidth = estimate_bandwidth(df1), 
+                             sd.count = 3, 
+                             quantile.requested = 0.95, 
+                             quantile.requested.type = "probability", 
+                             chunk.size = 1000, 
+                             verbose = F)
+  
+  hv2 = hypervolume_gaussian(df2, name = 'hv2',
+                             #samples.per.point = ceiling((10^(3 + sqrt(ncol(df2))))/nrow(df2)),
+                             samples.per.point = 5000,
+                             kde.bandwidth = estimate_bandwidth(df2), 
+                             sd.count = 3, 
+                             quantile.requested = 0.95, 
+                             quantile.requested.type = "probability", 
+                             chunk.size = 1000, 
+                             verbose = F)
+  # join hypervolumes
+  set_rand = hypervolume_set(hv1, hv2, check.memory = F, verbose = F)
+  
+  # calculate overlap
+  df_hvAll$randOV[i] = hypervolume_overlap_statistics(set_rand)[2]
+  
+}
+
+# calculate percent recovery
+df_hvALL = mutate(rec = sorenson/randOV)
+```
+'
+```{r plot hv data, echo = F, warning=F, message=F, out.width="50%"}
+
+df = read_csv('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/oyster.csv')%>% 
+  pivot_longer(cols = ref_vol:res_vol, names_to = 'site',
+               values_to = 'size')
+
+# plot 
+ggplot(df, aes(site, size, fill = site))+
+  geom_point(aes(color = site), position=position_jitterdodge())+
+  geom_boxplot(outlier.shape=NA, alpha = 0.5)+
+  labs(x = NULL, y = 'Niche size') +
+  scale_x_discrete(labels = c('Reference','Restored'))+
+  scale_fill_manual(values = c("#EBCC2A","#2ca1db")) +
+  scale_color_manual(values = c("#EBCC2A","#2ca1db")) +
+  theme_bw()+
+  theme(axis.title = element_text(size = 18), 
+        axis.text = element_text(size = 18, colour = "gray0"), 
+        plot.title = element_text(size = 18, hjust=0.5),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = 'none',
+        legend.title = element_blank(),
+        strip.text.x = element_text(size = 18),
+        legend.text = element_text(size = 12))
+
+
+ds = read_csv('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/oyster.csv')%>%
+  mutate(rec = sorenson/randOV,
+         oyster = 'Oyster Reef')
+
+# plot 
+ggplot(ds, aes(oyster, rec, fill = oyster))+
+  geom_point(aes(color = oyster), position=position_jitterdodge())+
+  geom_boxplot(outlier.shape=NA, alpha = 0.5)+
+  labs(x = NULL, y = '% Recovery') +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
+  theme_bw()+
+  theme(axis.title = element_text(size = 18), 
+        axis.text = element_text(size = 18, colour = "gray0"), 
+        plot.title = element_text(size = 18, hjust=0.5),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = 'none',
+        legend.title = element_blank(),
+        strip.text.x = element_text(size = 18),
+        legend.text = element_text(size = 12))
+```
+
