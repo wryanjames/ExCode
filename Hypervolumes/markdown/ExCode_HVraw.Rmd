@@ -50,7 +50,7 @@ Use the `mixTable` function to load data
   `site =` 'site' or 'location' of the data set
   
   `ind = F` if `TRUE` will output with columns as source values,
-       default is `FALSE` and will output data with columns as mean, sd, and posterior distribution intervals: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% + 1.5 * IQR, ymin = 25% - 1.5 * IQR
+       default is `FALSE` and will output data with columns as mean, sd, and posterior distribution quantiles: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% quantile + 1.5 * IQR, ymin = 25% quantile - 1.5 * IQR
        
        
   `nest = F` if nested mixing model, `TRUE` will return the sources of nested 
@@ -127,7 +127,23 @@ mixTable = function(file,site,ind = F,nest = F){
 
 ```
 
-Load data from the mixing models and combine together to be used to generate hypervolumes 
+Example of output
+
+```{r mixload F, message=F, warning=F}
+mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt', 
+              site = 'Reference',ind = F, nest = F)
+
+```
+
+Same data with `ind = T`
+
+```{r mixload T, message=F, warning=F}
+mixTable(file = 'C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt', 
+              site = 'Reference',ind = T, nest = F)
+```
+
+Load data from the mixing models and combine together to be used to generate hypervolumes
+
 
 ```{r load show, message=F, warning=F}
 ac = mixTable('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/ac4prey_ss.txt', 'ACS', ind = T, nest = T)
@@ -217,7 +233,7 @@ mcTRhv = hypervolume_gaussian(mcTR, name = 'Tarpon MCS',
 ```
 
 ### Generate hypervolume plots
-Before plotting hypervolumes need to be joined with `hypervolume::hypervolume_join()`. This can be used to combine more than two hypervolumes in order to plot. The plot function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with `pairplot = F`
+Before plotting hypervolumes need to be joined with `hypervolume::hypervolume_join()`. This can be used to combine more than two hypervolumes in order to plot. The `plot()` function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with `pairplot = F`
 
 ```{r plot all hvs, out.width="50%", cache=T}
 # Alligator
@@ -458,7 +474,7 @@ To calculate overlap, hypevolumes need to be joined with `hypervolume::hypervolu
 *jaccard*: Jaccard similarity (volume of intersection of 1 and 2 divided by volume of union
 of 1 and 2)
 
-*sorenson*: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)
+*sorensen*: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)
 
 *fraq_uniq_1*: Unique fraction of hypervolume 1 (volume of unique component of 1 divided by volume of 1))
 
@@ -487,12 +503,12 @@ Similar to niche size, in order to calculate a confidence interval, overlap need
   
   `frac =` fraction of data points to use to make bootstrapped hvs. Can also be input as a whole number for how many data points to use in resampling of bootstraps
   
-returns dataframe with sorenson overlap and amount unique of each hv
+returns dataframe with sorensen overlap and amount unique of each hv
 
 ```{r over fun, echo=T}
 bootOverlap = function(data1,data2,n,frac){
   require(tidyverse)
-  df = tibble(sorenson = rep(NA, n), unique1 = NA, unique2 = NA)
+  df = tibble(sorensen = rep(NA, n), unique1 = NA, unique2 = NA)
   n1 = ceiling(frac*nrow(data1))
   if(frac>1){
     n1 = frac
@@ -522,7 +538,7 @@ bootOverlap = function(data1,data2,n,frac){
                                   chunk.size = 1000, 
                                   verbose = F)
     set = hypervolume_set(randh1,randh2,check.memory = F, verbose = F)
-    df$sorenson[i] = hypervolume_overlap_statistics(set)[2]
+    df$sorensen[i] = hypervolume_overlap_statistics(set)[2]
     df$unique1[i] = hypervolume_overlap_statistics(set)[3]
     df$unique2[i] = hypervolume_overlap_statistics(set)[4]
     
@@ -576,7 +592,7 @@ ov = tibble(comp = c('System', 'System', 'Species', 'Species'),
 
 sp = ov %>% filter(comp == 'Species')
 
-ggplot(OV, aes(type, sorenson, fill = type))+
+ggplot(OV, aes(type, sorensen, fill = type))+
   geom_violin(size = .7)+
   geom_pointrange(data= sp, aes(x=type, y=Overlap, ymin=low,
                                       ymax=up),

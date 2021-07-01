@@ -4,7 +4,7 @@ author: "W. Ryan James"
 output: html_document
 ---
 
-Here is an example for how to use mixing model output data to generate the food web hypervolumes of a restored and a reference oyster bed with 6 species using the means and sd of resource use calculated susing `MixSIAR`. Data comes from Rezek et al. [2017](https://doi.org/10.1007/s00227-017-3084-2). A similar method is described in James et al. [2019](https://doi.org/10.1016/j.scitotenv.2019.134801).
+Here is an example for how to use mixing model output data to generate the food web hypervolumes of a restored and a reference oyster bed with 6 species using the means and sd of resource use calculated using `MixSIAR`. Data comes from [Rezek et al. 2017](https://doi.org/10.1007/s00227-017-3084-2). A similar method is described in [James et al. 2019](https://doi.org/10.1016/j.scitotenv.2019.134801).
 
 This script gives examples of how to:
 
@@ -12,7 +12,7 @@ This script gives examples of how to:
 2.  Generate points with custom function `HVvalues()` that are z-scored
 3.  Generate food web hypervolumes using mean and sd mixing model estimates
 4.  Plot food web hypervolumes
-5.  Calculate trophic breadth (volume)
+5.  Calculate trophic breadth of food web (volume)
 6.  Calculate food web overlap between two hypervolumes
 7.  Calculate percent recovery of food web
 8.  Repeat process to generate confidence intervals
@@ -46,7 +46,7 @@ Use the `mixTable` function to load data
 
 `site =` 'site' or 'location' of the data set
 
-`ind = F` if `TRUE` will output with columns as source values, default is `FALSE` and will output data with columns as mean, sd, and posterior distribution intervals: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% + 1.5 \* IQR, ymin = 25% - 1.5 \* IQR
+`ind = F` if `TRUE` will output with columns as source values, default is `FALSE` and will output data with columns as mean, sd, and posterior distribution quantiles: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% quantile + 1.5 * IQR, ymin = 25% quantile - 1.5 * IQR
 
 `nest = F` if nested mixing model, `TRUE` will return the sources of nested
 
@@ -153,10 +153,11 @@ df
 
 ### Generate random points from mean and sd
 
-When generating hypervolumes it is recommended by Blonder et al. [2014](https://doi-org.ezproxy.fiu.edu/10.1111/geb.12146) & [2018](https://doi-org.ezproxy.fiu.edu/10.1111/2041-210X.12865) that the number of input points (n) is great than 10 times the number of axes (m) $n/m > 10$. Not all situation allow for this recommendation, and the mean and sd of the `MixSIAR` output can be used to generate random points to be used to calculate the hypervolumes. This approach also better incorporates the information from the posterior distribution of the `MixSIAR` estimates.
+When generating hypervolumes it is recommended by Blonder et al. [2014](https://doi-org.ezproxy.fiu.edu/10.1111/geb.12146) & [2018](https://doi-org.ezproxy.fiu.edu/10.1111/2041-210X.12865) that the number of input points ($n$) is great than 10 times the number of axes ($m$); $n/m > 10$. Not all situation allow for this recommendation, and the mean and sd of the `MixSIAR` output can be used to generate random points to be used to calculate the hypervolumes. This approach also better incorporates the information from the posterior distribution of the `MixSIAR` estimates.
 
 The `HVvalues()` function generates random points of *n* length data from random sample with mean and sd but can be generated between a high and low value if `end_points = T`
-  + **Note** chose either column names or column numbers for `ID_rows` and `names` either work but must be the same
+
+  - **Note** chose either column names or column numbers for `ID_rows` and `names` either work but must be the same
   
   `df =` dataframe or tibble with each row containing unique entry for making random points 
   
@@ -172,7 +173,8 @@ The `HVvalues()` function generates random points of *n* length data from random
   
   `z_score = F` `TRUE` or `FALSE`, if `T` z-scores values
   
-  `end_points = F` `TRUE` or `FALSE` for if random points need to be generated between a high and low end point (e.g. 2.5% and 97.5% interval) `low` and `high` required, if `end_points = T`
+  `end_points = F` `TRUE` or `FALSE` for if random points need to be generated between a high and low end point (e.g. 2.5% and 97.5% quantile) `low` and `high` required, if `end_points = T`.
+*Having end points is useful when posterior distribution is cut off at either 0 or 1, so the random points generated are impossible values (i.e. source contribution > 1 or < 0)*
   
   `low = NULL` if `end_points = T`, column name or column number of df with lower bound to sample in
   
@@ -361,7 +363,7 @@ To calculate overlap, hypevolumes need to be joined with `hypervolume::hypervolu
 
 *jaccard*: Jaccard similarity (volume of intersection of 1 and 2 divided by volume of union of 1 and 2)
 
-*sorenson*: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)
+*sorensen*: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)
 
 *fraq_uniq_1*: Unique fraction of hypervolume 1 (volume of unique component of 1 divided by volume of 1))
 
@@ -378,7 +380,7 @@ hypervolume_overlap_statistics(set)
 ```
 
 ### Calculate percent recovery of food web
-In restoration, a system is considered recovered as it becomes similar to the reference system or a specific target. This can be easily calculated with hypervolumes by determining the overlap between the reference and restored food web hypervolumes. However, given that there is inherent variability between systems, [James et al. 2019](https://doi.org/10.1016/j.scitotenv.2019.134801) developed a method perecent recovery ($\%_{recovery}$) to compare overlap between two hypervolumes to the overlap of two randomly hypervolumes generated from the same data.$$\%_{recovery} = SO_{hab}/SO_{rand}$$ 
+In restoration, a system is considered recovered as it becomes similar to the reference system or a specific target. This can be easily calculated with hypervolumes by determining the overlap between the reference and restored food web hypervolumes. However, given that there is inherent variability between systems, [James et al. 2019](https://doi.org/10.1016/j.scitotenv.2019.134801) developed a method, perecent recovery ($\%_{recovery}$), to compare overlap between two hypervolumes to the overlap of two randomly hypervolumes generated from the same data.$$\%_{recovery} = SO_{hab}/SO_{rand}$$ 
 $SO_{hab}$ = Sorensen overlap of the reference and restored habitats,
 $SO_{rand}$ = Sorensen overlap of the 2 random hypervolumes
 
@@ -411,7 +413,7 @@ hv2 = hypervolume_gaussian(df2, name = 'hv2',
                              quantile.requested.type = "probability", 
                              chunk.size = 1000, 
                              verbose = F)
-  # join hypervolumes
+# join hypervolumes
 set_rand = hypervolume_set(hv1, hv2, check.memory = F, verbose = F)
 
 SO_hab = hypervolume_overlap_statistics(set)[2]
@@ -432,7 +434,7 @@ n = 50
 # create tibble to store data
 df_hvAll = tibble(rep = rep(seq(1,n,1)),
                   ref_vol = NA, res_vol= NA,
-                  sorenson = NA, randOV = NA)
+                  sorensen = NA, randOV = NA)
 
 
 
@@ -483,8 +485,8 @@ for (i in 1:n){
   # join hypervolumes
   set = hypervolume_set(ref_hv, res_hv, check.memory = F, verbose = F)
   
-  # calculate sorenson overlap
-  df_hvAll$sorenson[i] = hypervolume_overlap_statistics(set)[2]
+  # calculate sorensen overlap
+  df_hvAll$sorensen[i] = hypervolume_overlap_statistics(set)[2]
   
   # create random overlap from data
   # randomly assign data to make hvs
@@ -522,9 +524,17 @@ for (i in 1:n){
 }
 
 # calculate percent recovery
-df_hvALL = mutate(rec = sorenson/randOV)
+df_hvALL = df_hvALL %>% mutate(rec = sorensen/randOV)
+
+df_hvALL
 ```
-'
+
+```{r plot hvall for loop results, echo=F, warning=F, message=F}
+
+read_csv('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/oyster.csv')
+
+```
+
 ```{r plot hv data, echo = F, warning=F, message=F, out.width="50%"}
 
 df = read_csv('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/oyster.csv')%>% 
@@ -552,7 +562,7 @@ ggplot(df, aes(site, size, fill = site))+
 
 
 ds = read_csv('C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/oyster.csv')%>%
-  mutate(rec = sorenson/randOV,
+  mutate(rec = sorensen/randOV,
          oyster = 'Oyster Reef')
 
 # plot 

@@ -203,7 +203,7 @@ library(hypervolume)</code></pre>
 <p>Use the <code>mixTable</code> function to load data</p>
 <p><code>file =</code> name of name of .txt of summary stats from <code>MixSIAR</code></p>
 <p><code>site =</code> ‘site’ or ‘location’ of the data set</p>
-<p><code>ind = F</code> if <code>TRUE</code> will output with columns as source values, default is <code>FALSE</code> and will output data with columns as mean, sd, and posterior distribution intervals: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% + 1.5 * IQR, ymin = 25% - 1.5 * IQR</p>
+<p><code>ind = F</code> if <code>TRUE</code> will output with columns as source values, default is <code>FALSE</code> and will output data with columns as mean, sd, and posterior distribution quantiles: lowend = 2.5%, highend = 97.5%, mid = 50%, low = 25%, up = 75%, ymax = 75% quantile + 1.5 * IQR, ymin = 25% quantile - 1.5 * IQR</p>
 <p><code>nest = F</code> if nested mixing model, <code>TRUE</code> will return the sources of nested</p>
 <pre class="r"><code>mixTable = function(file,site,ind = F,nest = F){
   require(tidyverse)
@@ -272,6 +272,59 @@ library(hypervolume)</code></pre>
   
   return(df)
 }</code></pre>
+<p>Example of output</p>
+<pre class="r"><code>mixTable(file = &#39;C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt&#39;, 
+              site = &#39;Reference&#39;,ind = F, nest = F)</code></pre>
+<pre><code>##                        name      site     source  mean    sd lowend highend
+## 1               Balanus_spp Reference Gracilaria 0.888 0.089  0.709   0.981
+## 2  Costoanachis_semiplicata Reference Gracilaria 0.940 0.095  0.799   0.996
+## 3     Crassostrea_virginica Reference Gracilaria 0.734 0.204  0.226   0.988
+## 4             Menippe_adina Reference Gracilaria 0.917 0.104  0.692   0.996
+## 5              Opsanus_beta Reference Gracilaria 0.945 0.083  0.817   0.996
+## 6         Panopeus_herbstii Reference Gracilaria 0.753 0.196  0.254   0.989
+## 7               Balanus_spp Reference       SPOM 0.068 0.083  0.002   0.249
+## 8  Costoanachis_semiplicata Reference       SPOM 0.039 0.090  0.000   0.167
+## 9     Crassostrea_virginica Reference       SPOM 0.156 0.182  0.001   0.662
+## 10            Menippe_adina Reference       SPOM 0.053 0.095  0.001   0.268
+## 11             Opsanus_beta Reference       SPOM 0.035 0.078  0.000   0.148
+## 12        Panopeus_herbstii Reference       SPOM 0.141 0.167  0.001   0.619
+## 13              Balanus_spp Reference       SSOM 0.044 0.042  0.001   0.151
+## 14 Costoanachis_semiplicata Reference       SSOM 0.022 0.029  0.000   0.094
+## 15    Crassostrea_virginica Reference       SSOM 0.110 0.139  0.001   0.511
+## 16            Menippe_adina Reference       SSOM 0.030 0.040  0.000   0.137
+## 17             Opsanus_beta Reference       SSOM 0.020 0.025  0.000   0.091
+## 18        Panopeus_herbstii Reference       SSOM 0.106 0.140  0.001   0.518
+##      mid   low    up   ymax   ymin
+## 1  0.906 0.859 0.941 0.9810 0.7360
+## 2  0.961 0.929 0.981 0.9960 0.8510
+## 3  0.780 0.620 0.894 0.9880 0.2260
+## 4  0.946 0.897 0.974 0.9960 0.7815
+## 5  0.964 0.933 0.981 0.9960 0.8610
+## 6  0.802 0.646 0.905 0.9890 0.2575
+## 7  0.046 0.019 0.090 0.1965 0.0020
+## 8  0.017 0.006 0.039 0.0885 0.0000
+## 9  0.084 0.022 0.225 0.5295 0.0010
+## 10 0.024 0.008 0.058 0.1330 0.0010
+## 11 0.016 0.006 0.039 0.0885 0.0000
+## 12 0.075 0.021 0.203 0.4760 0.0010
+## 13 0.032 0.013 0.061 0.1330 0.0010
+## 14 0.012 0.004 0.029 0.0665 0.0000
+## 15 0.055 0.014 0.154 0.3640 0.0010
+## 16 0.016 0.005 0.039 0.0900 0.0000
+## 17 0.011 0.004 0.027 0.0615 0.0000
+## 18 0.050 0.013 0.142 0.3355 0.0010</code></pre>
+<p>Same data with <code>ind = T</code></p>
+<pre class="r"><code>mixTable(file = &#39;C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/OysterRes_ss.txt&#39;, 
+              site = &#39;Reference&#39;,ind = T, nest = F)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   name                     site      Gracilaria  SPOM  SSOM
+##   &lt;chr&gt;                    &lt;chr&gt;          &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 Balanus_spp              Reference      0.888 0.068 0.044
+## 2 Costoanachis_semiplicata Reference      0.94  0.039 0.022
+## 3 Crassostrea_virginica    Reference      0.734 0.156 0.11 
+## 4 Menippe_adina            Reference      0.917 0.053 0.03 
+## 5 Opsanus_beta             Reference      0.945 0.035 0.02 
+## 6 Panopeus_herbstii        Reference      0.753 0.141 0.106</code></pre>
 <p>Load data from the mixing models and combine together to be used to generate hypervolumes</p>
 <pre class="r"><code>ac = mixTable(&#39;C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/ac4prey_ss.txt&#39;, &#39;ACS&#39;, ind = T, nest = T)
 mc = mixTable(&#39;C:/Users/wrjam/Dropbox/WorkDocs/R/Github/ExCode/Hypervolumes/data/mc4prey_ss.txt&#39;, &#39;MCS&#39;, ind = T, nest = T)
@@ -383,7 +436,7 @@ mcTRhv = hypervolume_gaussian(mcTR, name = &#39;Tarpon MCS&#39;,
 </div>
 <div id="generate-hypervolume-plots" class="section level3">
 <h3>Generate hypervolume plots</h3>
-<p>Before plotting hypervolumes need to be joined with <code>hypervolume::hypervolume_join()</code>. This can be used to combine more than two hypervolumes in order to plot. The plot function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with <code>pairplot = F</code></p>
+<p>Before plotting hypervolumes need to be joined with <code>hypervolume::hypervolume_join()</code>. This can be used to combine more than two hypervolumes in order to plot. The <code>plot()</code> function has a lot of flexibility, and I encourage playing around with the different arguments to see what all can be done. Plotting is not limited to pairplots and can be used to plot in 3D with <code>pairplot = F</code></p>
 <pre class="r"><code># Alligator
 hvAC= hypervolume_join(acSNhv, acTRhv)
 
@@ -582,7 +635,7 @@ hvCI</code></pre>
 <p>Overlap is a measure of the similarity between two hypervolumes. It takes into account both the position and the size of the hypervolumes. So to have high overlap, the hypervolumes need to be both similar in size and located in the same <em>n</em>-dimensional space.</p>
 <p>To calculate overlap, hypevolumes need to be joined with <code>hypervolume::hypervolume_set()</code>. To calculate the metrics <code>hypervolume::hypervolume_overlap_statistics()</code>. This function calculates 4 metrics that are related to the overlap of the two hypervolumes</p>
 <p><em>jaccard</em>: Jaccard similarity (volume of intersection of 1 and 2 divided by volume of union of 1 and 2)</p>
-<p><em>sorenson</em>: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)</p>
+<p><em>sorensen</em>: Sorensen similarity (twice the volume of intersection of 1 and 2 divided by volume of 1 plus volume of 2)</p>
 <p><em>fraq_uniq_1</em>: Unique fraction of hypervolume 1 (volume of unique component of 1 divided by volume of 1))</p>
 <p><em>fraq_uniq_2</em>: Unique fraction of hypervolume 2 (volume of unique component of 2 divided by volume of 2))</p>
 <pre class="r"><code># alligator overlap
@@ -626,10 +679,10 @@ MC = hypervolume_set(mcSNhv, mcTRhv, check.memory = F, verbose = F)</code></pre>
 <p><code>data2 =</code> tibble or dataframe of z-scored data for hv 2</p>
 <p><code>n =</code> number of iterations to run for bootstrapping</p>
 <p><code>frac =</code> fraction of data points to use to make bootstrapped hvs. Can also be input as a whole number for how many data points to use in resampling of bootstraps</p>
-<p>returns dataframe with sorenson overlap and amount unique of each hv</p>
+<p>returns dataframe with sorensen overlap and amount unique of each hv</p>
 <pre class="r"><code>bootOverlap = function(data1,data2,n,frac){
   require(tidyverse)
-  df = tibble(sorenson = rep(NA, n), unique1 = NA, unique2 = NA)
+  df = tibble(sorensen = rep(NA, n), unique1 = NA, unique2 = NA)
   n1 = ceiling(frac*nrow(data1))
   if(frac&gt;1){
     n1 = frac
@@ -659,7 +712,7 @@ MC = hypervolume_set(mcSNhv, mcTRhv, check.memory = F, verbose = F)</code></pre>
                                   chunk.size = 1000, 
                                   verbose = F)
     set = hypervolume_set(randh1,randh2,check.memory = F, verbose = F)
-    df$sorenson[i] = hypervolume_overlap_statistics(set)[2]
+    df$sorensen[i] = hypervolume_overlap_statistics(set)[2]
     df$unique1[i] = hypervolume_overlap_statistics(set)[3]
     df$unique2[i] = hypervolume_overlap_statistics(set)[4]
     
@@ -693,7 +746,7 @@ ovMC$type = &#39;MCS&#39;
 OV = bind_rows(ovAC, ovMC)
 OV</code></pre>
 <pre><code>## # A tibble: 200 x 5
-##    sorenson unique1 unique2 comp    type 
+##    sorensen unique1 unique2 comp    type 
 ##       &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;
 ##  1   0.0660   0.965   0.454 Species ACS  
 ##  2   0.0956   0.942   0.734 Species ACS  
