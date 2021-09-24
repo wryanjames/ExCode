@@ -28,7 +28,6 @@ This example gives a basic intro into R syntax that can be useful for ecological
 7.  Vector operations 
 8.  For loops
   + Plotting 
-9.  Creating custom functions
 
 ## Basic operations in R
 
