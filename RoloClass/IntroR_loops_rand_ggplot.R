@@ -85,17 +85,15 @@ m3[4]
 
  
 
-# Matrix algebra can be done on matrices. Also functions like `sum()`, `rowSums()`, and `colSums()`,`mean()`, `rowMeans()`, and `colMeans()`. 
-
+# Matrix algebra can be done on matrices. There are specific matrix opperation like `%*%`, and  functions like `sum()`,`mean()`, `rowSums()`, `colSums()`, `rowMeans()`, and `colMeans()` can be used to sum up entire matrices or specific rows or columns. 
   
-
-m2 = matrix(c(1,2,3,4,5,6), ncol = 2)
+m2 = matrix(c(1,2,3,4,5,6), ncol = 3)
 m2 
 
 m2 + 1 
 m2/3
 
-m3 = matrix(c(1,2,3,4,5,6), ncol = 2, byrow = T)
+m3 = matrix(c(1,2,3,4,5,6), ncol = 3, byrow = T)
 m3
 
 m2 + m3 
@@ -106,6 +104,10 @@ v = c(1,2,3)
 
 m2*v
 
+# matrix multiplication 
+m4 = matrix(c(1,2,3), ncol = 1)
+m2 %*% m4
+
 # functions with matrices
 m2
 sum(m2)
@@ -114,7 +116,6 @@ rowSums(m2)
 rowMeans(m2)
 colSums(m2)
 colMeans(m2)
-
  
 
 ## `for` loops
@@ -207,36 +208,48 @@ dplyr::sample_n(df, size = 3, replace = T)
 dplyr::sample_n(df, size = 10, replace = T, weight = prob)
  
 
-# We can bring what we learned together to simulate change in a population over time
+# We can bring what we learned together to simulate change in a population over time. This code simulates the change in a population over `time_length` with a starting population size `pop_start` using a `for` loop. The code is replicated `reps` times. The population size changes by randomly generating births and deaths from a table of with various types of years `year_type`.
 
-
-  
-
+# table of year conditions
 year_type = tibble(cond = c('good', 'average', 'bad'),
                    birth = c(500, 300, 100),
                    death = c(100, 300, 500),
                    prob = c(0.25, 0.5, 0.25))
 
+# beginning size of population
 pop_start = 50000 
+# number of time iterations to use
 time_length = 100
+# number of replicate trials to simulate
 reps = 10
 
-
+# for loop for number of reps
 for (i in 1:reps){
+  # indicate which trial based on i in 1:reps
   trial = paste0('trial_',i)
+  # generate a new table to store output with rows 0:time_length for given trial
   pop = tibble(time = 0:time_length, n = NA,
                trial = trial, year = NA, change = NA)
+  # for row where time == 0 (initial conditions) make n = to starting population
   pop$n[pop$time == 0] = pop_start
   
+  # for loop over all time points 
   for (t in 1:(nrow(pop)-1)){
+    # randomly select year conditions from year_type df that is weighted by the probability of occurance
     year = sample_n(year_type, size = 1, weight = prob)
+    # randomly generate number of births based on year type conditions 
     birth = round(rnorm(n = 1, mean = year$birth[1], sd = 50))
+    # randomly generate number of deaths based on year type conditions 
     death = round(rnorm(n = 1, mean = year$death[1], sd = 50))
-    pop$n[pop$time == t] = birth - death + pop$n[pop$time == (t-1)]
+    # population size (n) at time t is calculated by adding the difference in births and deaths to the population size where time = t - 1
+    pop$n[pop$time == t] = pop$n[pop$time == (t-1)] + birth - death 
+    # label year type for time = t
     pop$year[pop$time == t] = year$cond[1]
+    # cacluate change in population size at time t
     pop$change[pop$time == t] = birth - death
   }
   
+  # this stores the output of each trial in a new tibble (tpop) if it is the first trial then pop is tpop, after first trial then bind the rows of the trial to the rest of the trials 
   if (i ==1){
     tpop = pop
   }else{
