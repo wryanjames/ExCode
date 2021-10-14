@@ -44,7 +44,7 @@ d = rnorm(n = 40, mean = 6, sd = 2)
 mean(d) #mean
 median(d) #median
 sd(d) #standard deviation
-quantile(d, c(0.025, 0.075)) # 95% CI
+quantile(d, c(0.025, 0.975)) # 95% CI
 
 # math with vectors
 e = c(3, 1, 5, 6)
