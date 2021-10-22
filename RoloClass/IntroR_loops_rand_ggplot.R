@@ -116,6 +116,9 @@ rowSums(m2)
 rowMeans(m2)
 colSums(m2)
 colMeans(m2)
+
+
+
  
 
 ## `for` loops
