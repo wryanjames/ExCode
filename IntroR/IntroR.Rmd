@@ -41,6 +41,9 @@ This example gives a basic intro into R syntax that can be useful for ecological
 11.  Vector operations 
       + Custom Functions
       + `purr`
+12.  Random sampling in R
+13.  Figures with `ggplot2`
+      + Combining plots
 
 ## Basic operations in R
 
@@ -710,3 +713,413 @@ args2 %>%
   str()
 
 ```
+
+## Random sampling in R
+Generating random numbers or randomly sampling is commonly required in ecology. R has base functions that can be used to randomly generate numbers depending on the distribution wanted. Also packages like [truncnorm](https://www.rdocumentation.org/packages/truncnorm/versions/1.0-8/topics/truncnorm) and  `dplyr` in `tidyverse` are useful.  
+
+```{r, results='hide'}
+library(truncnorm)
+library(tidyverse)
+```
+
+
+#### Generate random numbers
+```{r}
+# base R
+rnorm(5, mean = 0, sd = 1)
+runif(5, min = 0, max = 5)
+rbinom(5, size = 2, prob = 0.5)
+rbinom(5, size = 2, prob = 0.2)
+
+```
+
+```{r}
+#library(rtruncnorm)
+# truncnorm to truncate normal distribution
+rnorm(20, mean = 1, sd = 2)
+truncnorm::rtruncnorm(20, mean = 1, sd = 2, a=-Inf, b=Inf)
+truncnorm::rtruncnorm(20, mean = 1, sd = 2, a=0, b=2)
+```
+
+#### Random selection 
+```{r}
+# base R 
+b = 1:10
+sample(b, size =2, replace = F)
+
+c = 1:5 
+sample(c, size = 6, replace = T)
+
+# from list
+sample(c('good', 'bad'), size = 8, replace = T)
+
+# change probability
+sample(c('good', 'bad'), size = 8, replace = T, prob = c(0.2, 0.8))
+
+# sample matrices from list 
+m1 = matrix(c(6,5,4,3,2,1), ncol = 2)
+m2 = matrix(c(1,2,3,4,5,6), ncol = 2)
+m3 = matrix(c(1,2,3,4,5,6), ncol = 2, byrow = T)
+
+m = list(m1, m2, m3)
+
+sample(m, size = 4, replace = T)
+
+sample(m, size = 4, replace = T, prob = c(0.8, 0.1, 0.1))
+
+```
+
+
+```{r}
+#library(tidyverse)
+df = tibble(cond = c('good', 'bad', 'ok'), prob = c(0.5, 0.3, 0.2))
+
+dplyr::sample_n(df, size = 2, replace = F)
+
+dplyr::sample_n(df, size = 3, replace = T)
+
+dplyr::sample_n(df, size = 10, replace = T, weight = prob)
+```
+
+We can bring what we learned together to simulate change in a population over time. This code simulates the change in a population over `time_length` with a starting population size `pop_start` using a `for` loop. The code is replicated `reps` times. The population size changes by randomly generating births and deaths from a table of with various types of years `year_type`.
+
+
+```{r}
+# table of year conditions
+year_type = tibble(cond = c('good', 'average', 'bad'),
+              birth = c(500, 300, 100),
+              death = c(100, 300, 500),
+              prob = c(0.25, 0.5, 0.25))
+
+# beginning size of population
+pop_start = 50000 
+# number of time iterations to use
+time_length = 100
+# number of replicate trials to simulate
+reps = 10
+
+# for loop for number of reps
+for (i in 1:reps){
+  # indicate which trial based on i in 1:reps
+  trial = paste0('trial_',i)
+  # generate a new table to store output with rows 0:time_length for given trial
+  pop = tibble(time = 0:time_length, n = NA,
+               trial = trial, year = NA, change = NA)
+  # for row where time == 0 (initial conditions) make n = to starting population
+  pop$n[pop$time == 0] = pop_start
+  
+  # for loop over all time points 
+  for (t in 1:(nrow(pop)-1)){
+    # randomly select year conditions from year_type df that is weighted by the probability of occurance
+    year = sample_n(year_type, size = 1, weight = prob)
+    # randomly generate number of births based on year type conditions 
+    birth = round(rnorm(n = 1, mean = year$birth[1], sd = 50))
+    # randomly generate number of deaths based on year type conditions 
+    death = round(rnorm(n = 1, mean = year$death[1], sd = 50))
+    # population size (n) at time t is calculated by adding the difference in births and deaths to the population size where time = t - 1
+    pop$n[pop$time == t] = pop$n[pop$time == (t-1)] + birth - death 
+    # label year type for time = t
+    pop$year[pop$time == t] = year$cond[1]
+    # cacluate change in population size at time t
+    pop$change[pop$time == t] = birth - death
+  }
+  
+  # this stores the output of each trial in a new tibble (tpop) if it is the first trial then pop is tpop, after first trial then bind the rows of the trial to the rest of the trials 
+  if (i ==1){
+    tpop = pop
+  }else{
+    tpop = bind_rows(tpop,pop)
+  }
+}
+
+head(tpop)
+```
+
+
+## Figures with `ggplot2` 
+The `ggplot2` package is part of the packages that load with `tidyverse` and has become the standard in ecology. The syntax builds upon on a base function and is very customizable [see cheat sheet](https://www.rstudio.com/resources/cheatsheets/). 
+
+The base of all `ggplot2` begins with `ggplot()` and `geom_...()` are built upon them 
+
+```{r plot}
+ggplot(tpop, aes(x = time, y = n))+
+  geom_point()
+```
+
+Show color based on trial number and line connecting dots
+
+```{r}
+ggplot(tpop, aes(x = time, y = n, color = trial))+
+  geom_point()+
+  geom_line()
+```
+
+Change labels and style of plot
+
+
+```{r}
+ggplot(tpop, aes(x = time, y = n, color = trial))+
+  geom_point()+
+  geom_line()+
+  labs(x = 'Time', y = 'Population size')+
+  theme_classic()
+```
+
+Modify the size of axis label text and legend position  
+
+```{r}
+ggplot(tpop, aes(x = time, y = n, color = trial))+
+  geom_point()+
+  geom_line()+
+  labs(x = 'Time', y = 'Population size')+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'bottom',
+        legend.title = element_blank())
+```
+
+Modify the range of time on x axis
+
+```{r}
+ggplot(tpop, aes(x = time, y = n, color = trial))+
+  geom_point()+
+  geom_line()+
+  scale_x_continuous(limits = c(0,20))+
+  labs(x = 'Time', y = 'Population size')+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'bottom',
+        legend.title = element_blank())
+```
+
+Split each trial into own grid
+
+```{r}
+ggplot(tpop, aes(x = time, y = n))+
+  geom_point()+
+  geom_line()+
+  labs(x = 'Time', y = 'Population size')+
+  facet_wrap(~trial)+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'bottom',
+        legend.title = element_blank())
+```
+
+Modify the label and size of strip text
+
+
+```{r}
+labels = c('trial_1' = 'Trial 1',
+          'trial_2' = 'Trial 2',
+          'trial_3' = 'Trial 3',
+          'trial_4' = 'Trial 4',
+          'trial_5' = 'Trial 5',
+          'trial_6' = 'Trial 6',
+          'trial_7' = 'Trial 7',
+          'trial_8' = 'Trial 8',
+          'trial_9' = 'Trial 9',
+          'trial_10' = 'Trial 10')
+
+ggplot(tpop, aes(x = time, y = n))+
+  geom_point()+
+  geom_line()+
+  labs(x = 'Time', y = 'Population size')+
+  facet_wrap(~trial, nrow = 2, labeller = as_labeller(labels))+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'bottom',
+        legend.title = element_blank(),
+        strip.text = element_text(size = 12))
+```
+
+
+
+Remake figure with the mean and min and max values from the multiple trials
+
+
+```{r}
+ggplot(tpop, aes(x = time, y = n))+
+  geom_pointrange(stat = "summary",
+                  fun.min = 'min',
+                  fun.max = 'max',
+                  fun = 'mean')+
+  labs(x = 'Time', y = 'Population size')+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+```
+
+Make box plot of change in population size based on type of year 
+
+```{r}
+ggplot(tpop, aes(x = year, y = change))+
+  geom_boxplot()+
+  labs(x = 'Type of year', y = expression(Delta*'Population'))+
+  theme_bw()
+```
+
+Remove `NA` and add color to plot
+
+```{r}
+ggplot(tpop %>% drop_na, aes(x = year, y = change, fill = year))+
+  geom_boxplot()+
+  labs(x = 'Type of year', y = expression(Delta*'Population'))+
+  theme_bw()
+```
+
+Change order of x axis and color of plot. Colors can be both hex code or from names that R has. A help website for picking colors is [here](https://rstudio-pubs-static.s3.amazonaws.com/3486_79191ad32cf74955b4502b8530aad627.html).
+
+```{r ch}
+
+tpop = tpop %>% 
+  mutate(year = factor(year, levels = c('good', 'average', 'bad')))%>%
+  drop_na
+
+colors = c('good' = 'darkgreen',
+           'average' = 'goldenrod',
+           'bad' = 'firebrick')
+
+ggplot(tpop, aes(x = year, y = change, fill = year))+
+  geom_boxplot()+
+  labs(x = 'Type of year', y = expression(Delta*'Population'))+
+  scale_fill_manual(values = colors)+
+  theme_bw()
+```
+
+Modify the labels and remove the legend
+
+```{r}
+ggplot(tpop, aes(x = year, y = change, fill = year))+
+  geom_boxplot()+
+  labs(x = 'Type of year', y = expression(Delta*'Population'))+
+  scale_x_discrete(labels = c('Good', 'Average', 'Bad'))+
+  scale_fill_manual(values = colors)+
+  theme_bw()+
+  theme(axis.title = element_text(size = 18), 
+        axis.text.y = element_text(size = 18, colour = "black"), 
+        axis.text.x = element_text(size = 14, colour = "black"), 
+        legend.position = 'none',
+        legend.title = element_blank(),
+        strip.text.x = element_text(size = 18),
+        legend.text = element_text(size = 12))
+```
+
+### Combining plots 
+Sometimes we would like to combine different sub figures together to make a single figure. There are a few packages that can do this with `ggpubr` and `patchwork` some of the most common. I like `ggpubr` and use this one, but people seem to like `patchwork`. 
+
+```{r}
+library(ggpubr)
+library(wesanderson)
+
+a = ggplot(tpop, aes(x = time, y = n))+
+  geom_pointrange(stat = "summary",
+                  fun.min = 'min',
+                  fun.max = 'max',
+                  fun = 'mean')+
+  labs(x = 'Time', y = 'Population size')+
+  theme_classic()+
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12))
+
+b = ggplot(tpop, aes(x = year, y = change, fill = year))+
+  geom_boxplot()+
+  labs(x = 'Type of year', y = expression(Delta*'Population'))+
+  scale_x_discrete(labels = c('Good', 'Average', 'Bad'))+
+  scale_fill_manual(values = colors)+
+  theme_bw()+
+  theme(axis.title = element_text(size = 18), 
+        axis.text.y = element_text(size = 18, colour = "black"), 
+        axis.text.x = element_text(size = 14, colour = "black"), 
+        legend.position = 'none',
+        legend.title = element_blank(),
+        strip.text.x = element_text(size = 18),
+        legend.text = element_text(size = 12))
+
+ggarrange(a,b,
+          labels = c('a)','b)'),
+          ncol = 1)
+
+ggarrange(a,b,
+          labels = c('a)','b)'),
+          ncol = 1,
+          align = 'hv')
+
+# common legend
+a = ggplot(mtcars, aes(wt, fill = as.character(cyl), 
+                       color = as.character(cyl)))+
+  geom_density(alpha = 0.4)+
+  labs(x = 'Weight of car (tonnes)', 
+       fill = '# of engine cylinders')+
+  scale_color_manual(values = wes_palette('GrandBudapest1'),
+                     guide = "none")+
+  scale_fill_manual(values = wes_palette('GrandBudapest1'))+
+  theme_bw()+
+  theme(axis.title = element_text(size = 10), 
+        axis.text.y = element_text(size = 10, colour = "black"), 
+        axis.text.x = element_text(size = 8, colour = "black"), 
+        legend.position = 'bottom',
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(size = 10),
+        legend.text = element_text(size = 7))
+
+b = ggplot(mtcars, aes(mpg, color = as.character(cyl),
+                       fill = as.character(cyl)))+
+  geom_density(alpha = 0.4)+
+  labs(x = 'Miles/gallon',
+       fill = '# of engine cylinders')+
+  scale_color_manual(values = wes_palette('GrandBudapest1'),
+                     guide = "none")+
+  scale_fill_manual(values = wes_palette('GrandBudapest1'))+
+  theme_bw()+
+  theme(axis.title = element_text(size = 10), 
+        axis.text.y = element_text(size = 10, colour = "black"), 
+        axis.text.x = element_text(size = 8, colour = "black"), 
+        legend.position = 'bottom',
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(size = 10),
+        legend.text = element_text(size = 7))
+  
+
+c = ggplot(mtcars, aes(wt, mpg, group = cyl, color = as.character(cyl)))+
+  geom_point(size = 2)+
+  geom_smooth(method = 'lm',size = 1)+
+  labs(x = 'Weight of car (tonnes)', 
+       y = 'Miles/gallon',
+       color = '# of engine cylinders')+
+  scale_color_manual(values = wes_palette('GrandBudapest1'))+
+  theme_bw()+
+  theme(axis.title = element_text(size = 10), 
+        axis.text.y = element_text(size = 10, colour = "black"), 
+        axis.text.x = element_text(size = 8, colour = "black"), 
+        legend.position = 'bottom',
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(size = 10),
+        legend.text = element_text(size = 7))
+
+
+ggarrange(a,b,c, 
+          labels = c('A','B','C'),
+          nrow = 2,ncol = 2,
+          common.legend = F)
+
+ggarrange(a,b,c, 
+          labels = c('A','B','C'),
+          nrow = 2, ncol = 2,
+          common.legend = T,
+          legend = 'top')
+
+ggarrange(ggarrange(a,b, labels = c('A','B'), common.legend = T),c,
+          labels = c('','C'),
+          nrow = 2,
+          legend = 'none')
+  
+```
+
